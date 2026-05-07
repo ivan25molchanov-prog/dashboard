@@ -929,7 +929,7 @@ const QUOTES = [
   'Один гениальный кадр лучше тысячи посредственных.',
 ];
 
-function today() { return new Date().toISOString().split('T')[0]; }
+function today() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function load(k, d) { try { const v = localStorage.getItem(k); return v !== null ? JSON.parse(v) : d; } catch { return d; } }
 function save(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
 
