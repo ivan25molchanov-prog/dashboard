@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>evilonside — dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --black: #080808;
+  --white: #ffffff;
+  --card: #e6e1d6;
+  --text-dark: #111111;
+  --muted-dark: #666666;
+  --muted-light: rgba(255,255,255,0.35);
+  --orange: #e8510a;
+  --orange2: #c13a00;
+}
+
+html, body {
+  width: 100%; min-height: 100vh;
+  background: var(--black);
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+/* BACKGROUND */
+.bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.bg-glow {
+  position: absolute;
+  bottom: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1400px;
+  height: 800px;
+  background: radial-gradient(ellipse at center bottom, rgba(220,70,10,0.45) 0%, rgba(180,40,0,0.22) 40%, transparent 72%);
+  filter: blur(80px);
+  pointer-events: none;
+}
+
+.bg-lines { display: none; }
+
+/* MAIN LAYOUT */
+.shell {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 24px 24px;
+  gap: 20px;
+}
+
+/* MAIN CARD */
+.main-card {
+  background: var(--card);
+  border-radius: 28px;
+  width: 100%;
+  max-width: 860px;
+  padding: 36px 40px;
+  color: var(--text-dark);
+}
+
+/* CARD HEADER */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.card-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text-dark);
+}
+
+.card-date {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted-dark);
+  background: rgba(0,0,0,0.06);
+  padding: 5px 14px;
+  border-radius: 20px;
+}
+
+/* DAY SELECTOR */
+.day-selector {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 20px;
+  background: rgba(0,0,0,0.06);
+  padding: 4px;
+  border-radius: 12px;
+  width: fit-content;
+}
+
+.day-btn {
+  padding: 6px 16px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: var(--muted-dark);
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.18s;
+}
+.day-btn.active {
+  background: var(--white);
+  color: var(--text-dark);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+}
+.day-btn:hover:not(.active) { color: var(--text-dark); }
+
+/* PLAN DAY BADGE */
+.plan-day-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(0,0,0,0.06);
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted-dark);
+  margin-bottom: 14px;
+  letter-spacing: 0.02em;
+}
+
+/* GRID */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+/* SECTION LABEL */
+.sec-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-dark);
+  margin-bottom: 10px;
+}
+
+/* DIVIDER */
+.divider {
+  height: 1px;
+  background: rgba(0,0,0,0.08);
+  margin: 20px 0;
+}
+
+/* TASKS */
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.15s;
+}
+.task-item:last-child { border-bottom: none; }
+.task-item.done { opacity: 0.38; }
+.task-item.done .task-text { text-decoration: line-through; }
+
+.chk {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 1.5px solid rgba(0,0,0,0.2);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  background: transparent;
+}
+.task-item.done .chk {
+  background: var(--text-dark);
+  border-color: var(--text-dark);
+}
+.chk-icon { display: none; color: white; font-size: 10px; }
+.task-item.done .chk-icon { display: block; }
+
+.task-text { font-size: 13px; font-weight: 400; color: var(--text-dark); flex: 1; line-height: 1.3; }
+.task-tag {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.07);
+  color: var(--muted-dark);
+  flex-shrink: 0;
+}
+
+/* ADD CUSTOM TASK */
+.add-task-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+.add-task-row input {
+  flex: 1;
+  background: rgba(0,0,0,0.04);
+  border: 1.5px solid rgba(0,0,0,0.08);
+  border-radius: 9px;
+  padding: 6px 10px;
+  color: var(--text-dark);
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.add-task-row input:focus { border-color: rgba(0,0,0,0.2); }
+.add-task-row input::placeholder { color: var(--muted-dark); }
+.add-task-btn {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(0,0,0,0.12);
+  background: transparent;
+  color: var(--muted-dark);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+  font-family: 'Inter', sans-serif;
+  flex-shrink: 0;
+}
+.add-task-btn:hover { background: var(--text-dark); color: white; border-color: var(--text-dark); }
+.custom-del-btn {
+  background: none; border: none;
+  color: rgba(0,0,0,0.2);
+  cursor: pointer; font-size: 15px;
+  padding: 0 2px; flex-shrink: 0;
+  transition: color 0.15s;
+  line-height: 1;
+}
+.custom-del-btn:hover { color: #cc3333; }
+
+.reset-link {
+  font-size: 11px;
+  color: var(--muted-dark);
+  cursor: pointer;
+  margin-top: 10px;
+  display: inline-block;
+  transition: color 0.15s;
+}
+.reset-link:hover { color: var(--text-dark); }
+
+/* STAT MINI CARDS */
+.stat-mini {
+  background: rgba(0,0,0,0.04);
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+.stat-mini-label { font-size: 10px; font-weight: 600; color: var(--muted-dark); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; }
+.stat-mini-val { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; color: var(--text-dark); line-height: 1; }
+.stat-mini-sub { font-size: 11px; color: var(--muted-dark); margin-top: 4px; }
+
+.prog { height: 3px; background: rgba(0,0,0,0.1); border-radius: 2px; margin-top: 8px; overflow: hidden; }
+.prog-fill { height: 100%; background: var(--text-dark); border-radius: 2px; transition: width 0.4s; }
+
+/* COUNTER ROWS */
+.counter-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+.counter-row:last-child { border-bottom: none; }
+.counter-lbl { flex: 1; font-size: 12px; color: var(--muted-dark); }
+.counter-val { font-size: 16px; font-weight: 700; min-width: 28px; text-align: center; }
+.cnt-btn {
+  width: 26px; height: 26px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(0,0,0,0.12);
+  background: transparent;
+  color: var(--muted-dark);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+  font-family: 'Inter', sans-serif;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.cnt-btn:hover { background: var(--text-dark); color: white; border-color: var(--text-dark); }
+
+/* INCOME */
+.income-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+.income-item:last-child { border-bottom: none; }
+.income-amt { font-size: 15px; font-weight: 700; color: var(--text-dark); min-width: 80px; }
+.income-desc { font-size: 12px; color: var(--muted-dark); flex: 1; }
+.income-date { font-size: 11px; color: rgba(0,0,0,0.3); }
+.del-btn { background: none; border: none; color: rgba(0,0,0,0.25); cursor: pointer; font-size: 16px; padding: 0 2px; transition: color 0.15s; }
+.del-btn:hover { color: #cc3333; }
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0,0,0,0.08);
+  margin-top: 8px;
+}
+.total-lbl { font-size: 11px; font-weight: 600; color: var(--muted-dark); text-transform: uppercase; letter-spacing: 0.06em; }
+.total-val { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+
+.empty { font-size: 12px; color: var(--muted-dark); padding: 12px 0; }
+
+/* INPUTS */
+.field-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.field-row input {
+  flex: 1;
+  background: rgba(0,0,0,0.05);
+  border: 1.5px solid rgba(0,0,0,0.1);
+  border-radius: 10px;
+  padding: 8px 12px;
+  color: var(--text-dark);
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.field-row input:focus { border-color: rgba(0,0,0,0.3); }
+.field-row input::placeholder { color: var(--muted-dark); }
+
+.action-btn {
+  padding: 8px 18px;
+  background: var(--text-dark);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+}
+.action-btn:hover { opacity: 0.8; }
+
+.fol-row { display: flex; gap: 8px; margin-top: 10px; }
+.fol-row input {
+  flex: 1;
+  background: rgba(0,0,0,0.05);
+  border: 1.5px solid rgba(0,0,0,0.1);
+  border-radius: 10px;
+  padding: 7px 12px;
+  color: var(--text-dark);
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  outline: none;
+}
+.fol-btn {
+  padding: 7px 16px;
+  background: var(--text-dark);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  transition: opacity 0.15s;
+}
+.fol-btn:hover { opacity: 0.8; }
+
+/* NOTE */
+.note-area {
+  width: 100%;
+  background: rgba(0,0,0,0.04);
+  border: 1.5px solid rgba(0,0,0,0.08);
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: var(--text-dark);
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  resize: none;
+  height: 80px;
+  outline: none;
+  margin-bottom: 10px;
+  transition: border-color 0.15s;
+  line-height: 1.5;
+}
+.note-area:focus { border-color: rgba(0,0,0,0.2); }
+.note-area::placeholder { color: var(--muted-dark); }
+
+.save-btn {
+  padding: 7px 18px;
+  background: rgba(0,0,0,0.08);
+  color: var(--text-dark);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  transition: background 0.15s;
+}
+.save-btn:hover { background: var(--text-dark); color: white; }
+
+/* QUOTE */
+.quote-block {
+  background: rgba(0,0,0,0.04);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-top: 14px;
+}
+.quote-text { font-size: 12px; font-style: italic; color: var(--text-dark); line-height: 1.6; }
+.quote-author { font-size: 10px; font-weight: 600; color: var(--muted-dark); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* LOG SCROLL */
+.log-scroll { max-height: 140px; overflow-y: auto; }
+.log-scroll::-webkit-scrollbar { width: 3px; }
+.log-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 2px; }
+
+.income-amount-input { max-width: 110px; }
+
+/* BOTTOM NAV */
+.bottom-nav {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  color: rgba(255,255,255,0.3);
+  font-size: 12px;
+  font-weight: 400;
+  padding: 8px 0 4px;
+}
+.bottom-nav a { color: rgba(255,255,255,0.3); text-decoration: none; transition: color 0.15s; }
+.bottom-nav a:hover { color: rgba(255,255,255,0.7); }
+
+.bottom-footer {
+  font-size: 11px;
+  color: rgba(255,255,255,0.18);
+  padding-bottom: 16px;
+  text-align: center;
+  letter-spacing: 0.01em;
+}
+
+/* EXPORT BUTTON */
+.export-btn {
+  padding: 5px 14px;
+  background: var(--text-dark);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: opacity 0.15s;
+}
+.export-btn:hover { opacity: 0.75; }
+
+/* MODAL */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.7);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  -webkit-overflow-scrolling: touch;
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  background: var(--card);
+  border-radius: 20px;
+  padding: 24px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.modal-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-dark);
+  letter-spacing: -0.02em;
+}
+.modal-sub {
+  font-size: 11px;
+  color: var(--muted-dark);
+  margin-top: 2px;
+}
+.export-textarea {
+  flex: 1;
+  min-height: 220px;
+  background: rgba(0,0,0,0.05);
+  border: 1.5px solid rgba(0,0,0,0.1);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-family: 'Inter', monospace;
+  font-size: 11px;
+  color: var(--text-dark);
+  resize: none;
+  outline: none;
+  line-height: 1.6;
+  overflow-y: auto;
+}
+.modal-actions {
+  display: flex;
+  gap: 8px;
+}
+.copy-btn {
+  flex: 1;
+  padding: 10px;
+  background: var(--text-dark);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  transition: opacity 0.15s;
+}
+.copy-btn:hover { opacity: 0.8; }
+.close-btn {
+  padding: 10px 18px;
+  background: rgba(0,0,0,0.07);
+  color: var(--text-dark);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.15s;
+}
+.close-btn:hover { background: rgba(0,0,0,0.14); }
+
+/* PROGRESS BADGE */
+.progress-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0,0,0,0.07);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted-dark);
+}
+.progress-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #22c55e;
+}
+
+/* ── MOBILE ── */
+@media (max-width: 600px) {
+  .shell { padding: 16px 12px 20px; gap: 14px; }
+  .main-card { padding: 20px 16px; border-radius: 20px; }
+  .card-header { flex-direction: column; align-items: flex-start; gap: 10px; margin-bottom: 18px; }
+  .card-header > div:last-child { display: flex; align-items: center; gap: 8px; width: 100%; }
+  .card-title { font-size: 18px; }
+  .day-selector { width: 100%; }
+  .day-btn { flex: 1; padding: 10px 0; font-size: 13px; text-align: center; touch-action: manipulation; }
+  .two-col { grid-template-columns: 1fr; gap: 16px; }
+  .three-col { grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .stat-mini { padding: 10px 10px; }
+  .stat-mini-val { font-size: 20px; }
+  .stat-mini-label { font-size: 9px; }
+  .stat-mini-sub { font-size: 10px; }
+  .cnt-btn { width: 36px; height: 36px; font-size: 18px; border-radius: 10px; }
+  .counter-val { font-size: 18px; min-width: 32px; }
+  .counter-row { padding: 10px 0; }
+  .field-row { flex-wrap: wrap; }
+  .income-amount-input { max-width: 100%; width: 100%; }
+  .task-item { padding: 11px 0; }
+  .chk { width: 22px; height: 22px; }
+  .task-text { font-size: 13px; }
+  .note-area { height: 90px; }
+  .bottom-nav { flex-wrap: wrap; justify-content: center; gap: 12px 20px; text-align: center; }
+  .fol-row input, .fol-btn { height: 40px; font-size: 13px; }
+}
+
+@media (max-width: 380px) {
+  .three-col { grid-template-columns: 1fr 1fr; }
+  .stat-mini:last-child { grid-column: span 2; }
+}
+</style>
+</head>
+<body>
+
+<!-- BACKGROUND -->
+<div class="bg">
+  <div class="bg-lines"></div>
+  <div class="bg-glow"></div>
+</div>
+
+<!-- SHELL -->
+<div class="shell">
+
+  <!-- MAIN CARD -->
+  <div class="main-card">
+
+    <!-- HEADER -->
+    <div class="card-header">
+      <div>
+        <div class="card-title">evilonside</div>
+        <div style="font-size:11px;color:var(--muted-dark);margin-top:2px;">май 2026 → уйти из общепита осенью</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div class="progress-badge">
+          <div class="progress-dot"></div>
+          <span id="taskProgress">0% задач</span>
+        </div>
+        <div class="card-date" id="dateDisplay"></div>
+        <button class="export-btn" onclick="openExport()">↑ Экспорт</button>
+      </div>
+    </div>
+
+    <div class="two-col">
+
+      <!-- LEFT: TASKS -->
+      <div>
+        <div class="sec-label" id="sectionLabel">план дня</div>
+        <div class="day-selector" id="daySelector">
+          <button class="day-btn" onclick="setDayType('work')" id="btn-work">Рабочий</button>
+          <button class="day-btn" onclick="setDayType('gym')" id="btn-gym">Зал</button>
+          <button class="day-btn" onclick="setDayType('free')" id="btn-free">Выходной</button>
+        </div>
+        <div id="planDayBadge" class="plan-day-badge" style="display:none;"></div>
+        <div id="taskList"></div>
+        <div id="customTaskList"></div>
+        <div class="add-task-row">
+          <input type="text" id="customTaskInput" placeholder="Добавить задачу на сегодня..." maxlength="100"
+            onkeydown="if(event.key==='Enter') addCustomTask()">
+          <button class="add-task-btn" onclick="addCustomTask()">+</button>
+        </div>
+        <span class="reset-link" onclick="resetTasks()">↺ сбросить</span>
+      </div>
+
+      <!-- RIGHT: STATS -->
+      <div>
+        <div class="sec-label">прогресс мая</div>
+        <div class="three-col" style="margin-bottom:14px;">
+          <div class="stat-mini">
+            <div class="stat-mini-label">Доход</div>
+            <div class="stat-mini-val" id="totalIncome">0</div>
+            <div class="stat-mini-sub">цель 30К ₽</div>
+            <div class="prog"><div class="prog-fill" id="incomeBar" style="width:0%"></div></div>
+          </div>
+          <div class="stat-mini">
+            <div class="stat-mini-label">Подписчики</div>
+            <div class="stat-mini-val" id="followersCount">321</div>
+            <div class="stat-mini-sub">цель 400</div>
+            <div class="prog"><div class="prog-fill" id="followersBar" style="width:0%"></div></div>
+          </div>
+          <div class="stat-mini">
+            <div class="stat-mini-label">Съёмок</div>
+            <div class="stat-mini-val" id="shootsCount">0</div>
+            <div class="stat-mini-sub">цель 3</div>
+          </div>
+        </div>
+
+        <div class="fol-row" style="margin-bottom:14px;">
+          <input type="number" id="followersInput" placeholder="Обновить подписчиков">
+          <button class="fol-btn" onclick="updateFollowers()">OK</button>
+        </div>
+
+        <div class="sec-label">счётчики</div>
+        <div id="counterRows"></div>
+      </div>
+
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="two-col">
+
+      <!-- INCOME -->
+      <div>
+        <div class="sec-label">доходы</div>
+        <div class="field-row">
+          <input type="number" id="incomeAmount" placeholder="Сумма ₽" class="income-amount-input">
+          <input type="text" id="incomeDesc" placeholder="Описание">
+          <button class="action-btn" onclick="addIncome()">+</button>
+        </div>
+        <div class="log-scroll">
+          <div id="incomeLog"></div>
+        </div>
+        <div class="total-row">
+          <span class="total-lbl">Итого май</span>
+          <span class="total-val" id="incomeTotalBottom">0 ₽</span>
+        </div>
+      </div>
+
+      <!-- NOTE + QUOTE -->
+      <div>
+        <div class="sec-label">заметка дня</div>
+        <textarea class="note-area" id="noteInput" placeholder="Мысли, идеи, что сработало..."></textarea>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button class="save-btn" onclick="saveNote()">Сохранить</button>
+          <span id="noteSaved" style="font-size:11px;color:#22c55e;display:none;">сохранено ✓</span>
+        </div>
+        <div class="quote-block">
+          <div class="quote-text" id="quoteDisplay"></div>
+          <div class="quote-author">Брехов</div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <a href="#">Задачи</a>
+    <a href="#">Финансы</a>
+    <a href="#">Инстаграм</a>
+    <a href="#">Спорт</a>
+    <a href="#">Путешествия</a>
+  </nav>
+
+  <div class="bottom-footer">
+    @evilonside &nbsp;·&nbsp; Краснодар, 2026 &nbsp;·&nbsp; Sony a7III
+  </div>
+
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="modal-overlay" id="exportModal" onclick="handleModalClick(event)">
+  <div class="modal-box">
+    <div>
+      <div class="modal-title">Экспорт данных</div>
+      <div class="modal-sub">Скопируй и вставь Клоду в чат</div>
+    </div>
+    <textarea class="export-textarea" id="exportText" readonly></textarea>
+    <div class="modal-actions">
+      <button class="copy-btn" id="copyBtn" onclick="copyExport()">Скопировать</button>
+      <button class="close-btn" onclick="closeModal()">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const TASKS = {
+  work: [
+    { text: 'Сторис — лайф (1-3 истории)', tag: 'IG' },
+    { text: 'Отвечать на директ и реакции', tag: 'IG' },
+    { text: 'Насмотренность 15 мин', tag: 'Фото' },
+    { text: 'Вечерний блок 1 час (контент / обработка)', tag: 'Фото' },
+    { text: 'Без бесцельного скролла', tag: '' },
+  ],
+  gym: [
+    { text: 'Зал — фулбади тренировка', tag: 'Спорт' },
+    { text: 'Сторис — лайф', tag: 'IG' },
+    { text: 'Главный блок: съёмка / рилс', tag: 'Фото' },
+    { text: 'Обработка в Lightroom', tag: 'Фото' },
+    { text: 'Насмотренность 15 мин', tag: 'Фото' },
+    { text: 'Без бесцельного скролла', tag: '' },
+  ],
+  free: [
+    { text: 'Сторис — лайф', tag: 'IG' },
+    { text: 'Главный блок 4 часа (съёмка / рилс)', tag: 'Фото' },
+    { text: 'Обработка и публикация', tag: 'Фото' },
+    { text: 'Запланировать контент на рабочие дни', tag: 'IG' },
+    { text: 'Насмотренность 15 мин', tag: 'Фото' },
+    { text: 'Шаг по принтам (типография / цены)', tag: '₽' },
+    { text: 'Без бесцельного скролла', tag: '' },
+  ]
+};
+
+const PLAN = {
+  '2026-05-07': { type: 'work', label: 'Рабочий', tasks: [
+    { text: 'Сторис — лайф', tag: 'IG' },
+    { text: 'Поиск идей (10-15 мин, референсы, фотографы, локации)', tag: 'Фото' },
+  ]},
+  '2026-05-08': { type: 'work', label: 'Рабочий', tasks: [
+    { text: 'Сторис — лайф', tag: 'IG' },
+    { text: 'Поиск идей (10-15 мин, референсы, фотографы, локации)', tag: 'Фото' },
+  ]},
+  '2026-05-09': { type: 'work', label: 'Рабочий', tasks: [
+    { text: 'Сторис — лайф', tag: 'IG' },
+    { text: 'Поиск идей (10-15 мин, референсы, фотографы, локации)', tag: 'Фото' },
+  ]},
+  '2026-05-10': { type: 'gym', label: 'Зал', tasks: [
+    { text: 'Зал — фулбади тренировка', tag: 'Спорт' },
+    { text: 'Выбрать 15-20 лучших фото из портфолио', tag: 'Фото' },
+    { text: 'Опубликовать первый пост из архива', tag: 'IG' },
+    { text: 'Записать разговорный рилс #1', tag: 'IG' },
+  ]},
+  '2026-05-11': { type: 'free', label: 'Выходной', tasks: [
+    { text: 'Договориться на творческую съёмку (Лера, Рома, Никита)', tag: '' },
+    { text: 'Смонтировать и опубликовать рилс #1', tag: 'IG' },
+  ]},
+  '2026-05-12': { type: 'work', label: 'Рабочий', tasks: [
+    { text: 'Сторис — лайф', tag: 'IG' },
+    { text: 'Поиск идей (10-15 мин, референсы, фотографы, локации)', tag: 'Фото' },
+  ]},
+  '2026-05-13': { type: 'work', label: 'Рабочий', tasks: [
+    { text: 'Сторис — лайф', tag: 'IG' },
+    { text: 'Поиск идей (10-15 мин, референсы, фотографы, локации)', tag: 'Фото' },
+  ]},
+  '2026-05-14': { type: 'gym', label: 'Зал', tasks: [
+    { text: 'Зал — фулбади тренировка', tag: 'Спорт' },
+    { text: 'Записать разговорный рилс', tag: 'IG' },
+    { text: 'Творческая съёмка №1 (бесплатно, для портфолио)', tag: 'Фото' },
+    { text: 'Сторис: бэкстейдж съёмки', tag: 'IG' },
+  ]},
+  '2026-05-15': { type: 'free', label: 'Выходной', tasks: [
+    { text: 'Обработка фото в Lightroom', tag: 'Фото' },
+    { text: 'Опубликовать 1-2 результата', tag: 'IG' },
+    { text: 'Позвонить в студию «Пыль» — условия аренды', tag: '' },
+  ]},
+  '2026-05-16': { type: 'work', label: 'Рабочий', tasks: [
+    { text: 'Сторис — лайф', tag: 'IG' },
+    { text: 'Поиск идей (10-15 мин, референсы, фотографы, локации)', tag: 'Фото' },
+  ]},
+  '2026-05-17': { type: 'work', label: 'Рабочий', tasks: [
+    { text: 'Сторис — лайф', tag: 'IG' },
+    { text: 'Поиск идей (10-15 мин, референсы, фотографы, локации)', tag: 'Фото' },
+  ]},
+  '2026-05-18': { type: 'gym', label: 'Зал', tasks: [
+    { text: 'Зал — фулбади тренировка', tag: 'Спорт' },
+    { text: 'Записать разговорный рилс #3', tag: 'IG' },
+    { text: 'Опубликовать рилс', tag: 'IG' },
+  ]},
+  '2026-05-19': { type: 'free', label: 'Выходной', tasks: [
+    { text: 'Найти типографию в Краснодаре (2гис), позвонить, узнать цены', tag: '₽' },
+    { text: 'Опубликовать прайс в сторис (1-2 часа, 30 фото, 5-7к)', tag: 'IG' },
+  ]},
+  '2026-05-20': { type: 'work', label: 'Рабочий', tasks: [
+    { text: 'Сторис — лайф', tag: 'IG' },
+    { text: 'Поиск идей (10-15 мин, референсы, фотографы, локации)', tag: 'Фото' },
+  ]},
+  '2026-05-21': { type: 'work', label: 'Рабочий', tasks: [
+    { text: 'Сторис — лайф', tag: 'IG' },
+    { text: 'Поиск идей (10-15 мин, референсы, фотографы, локации)', tag: 'Фото' },
+  ]},
+  '2026-05-22': { type: 'gym', label: 'Зал', tasks: [
+    { text: 'Зал — фулбади тренировка', tag: 'Спорт' },
+    { text: 'Записать разговорный рилс #4', tag: 'IG' },
+    { text: 'Творческая съёмка №2', tag: 'Фото' },
+  ]},
+  '2026-05-23': { type: 'free', label: 'Выходной', tasks: [
+    { text: 'Обработка фото', tag: 'Фото' },
+    { text: 'Съездить в типографию, потрогать образцы', tag: '₽' },
+  ]},
+  '2026-05-24': { type: 'work', label: 'Рабочий', tasks: [
+    { text: 'Сторис — лайф', tag: 'IG' },
+    { text: 'Поиск идей (10-15 мин, референсы, фотографы, локации)', tag: 'Фото' },
+  ]},
+  '2026-05-25': { type: 'work', label: 'Рабочий', tasks: [
+    { text: 'Сторис — лайф', tag: 'IG' },
+    { text: 'Поиск идей (10-15 мин, референсы, фотографы, локации)', tag: 'Фото' },
+  ]},
+  '2026-05-26': { type: 'gym', label: 'Зал', tasks: [
+    { text: 'Зал — фулбади тренировка', tag: 'Спорт' },
+    { text: 'Записать разговорный рилс #5', tag: 'IG' },
+    { text: 'Анонс в сторис: «скоро открываю запись на съёмки»', tag: 'IG' },
+  ]},
+  '2026-05-27': { type: 'free', label: 'Выходной', tasks: [
+    { text: 'Первый официальный анонс записи на съёмки', tag: 'IG' },
+    { text: 'Крючок → работы → что получит клиент → цена → «пишите в директ»', tag: 'IG' },
+  ]},
+  '2026-05-28': { type: 'work', label: 'Рабочий', tasks: [
+    { text: 'Отвечать на заявки', tag: '' },
+    { text: 'Сторис — лайф', tag: 'IG' },
+    { text: 'Поиск идей (10-15 мин, референсы, фотографы, локации)', tag: 'Фото' },
+  ]},
+  '2026-05-29': { type: 'work', label: 'Рабочий', tasks: [
+    { text: 'Отвечать на заявки', tag: '' },
+    { text: 'Сторис — лайф', tag: 'IG' },
+    { text: 'Поиск идей (10-15 мин, референсы, фотографы, локации)', tag: 'Фото' },
+  ]},
+  '2026-05-30': { type: 'gym', label: 'Зал', tasks: [
+    { text: 'Зал — фулбади тренировка', tag: 'Спорт' },
+    { text: 'Записать разговорный рилс #6', tag: 'IG' },
+    { text: 'Итоги месяца: что сделал, что нет', tag: '' },
+  ]},
+  '2026-05-31': { type: 'free', label: 'Выходной', tasks: [
+    { text: 'Подготовить план на июнь', tag: '' },
+    { text: 'Опубликовать итоговый пост месяца', tag: 'IG' },
+  ]},
+};
+
+const COUNTERS = [
+  { key: 'shoots', label: 'Съёмок сделано' },
+  { key: 'reels',  label: 'Рилсов снято' },
+  { key: 'gym',    label: 'Тренировок' },
+  { key: 'posts',  label: 'Постов опубл.' },
+  { key: 'leads',  label: 'Заявок на съёмку' },
+];
+
+const QUOTES = [
+  'Творчество = трафик. Портреты = заработок.',
+  '50 плохих штурмок = 1 шедевр.',
+  'Постоянство важнее разовой выпустки.',
+  '5 секунд от мысли к действию.',
+  'Сложность не равно успех.',
+  'Намерение больше желания.',
+  'Один гениальный кадр лучше тысячи посредственных.',
+];
+
+function today() { return new Date().toISOString().split('T')[0]; }
+function load(k, d) { try { const v = localStorage.getItem(k); return v !== null ? JSON.parse(v) : d; } catch { return d; } }
+function save(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
+
+function formatDate(d) {
+  const days = ['вс','пн','вт','ср','чт','пт','сб'];
+  const months = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+  const dt = new Date(d + 'T12:00:00');
+  return `${days[dt.getDay()]}, ${dt.getDate()} ${months[dt.getMonth()]}`;
+}
+
+document.getElementById('dateDisplay').textContent = formatDate(today());
+
+function getCurrentTasks() {
+  const p = PLAN[today()];
+  if (p) return { tasks: p.tasks, prefix: 'plan', isPlan: true, label: p.label };
+  return { tasks: TASKS[dayType], prefix: dayType, isPlan: false, label: null };
+}
+
+let dayType = load('dayType_' + today(), 'work');
+if (!TASKS[dayType]) dayType = 'work';
+
+const todayPlan = PLAN[today()];
+if (todayPlan) {
+  document.getElementById('daySelector').style.display = 'none';
+  const badge = document.getElementById('planDayBadge');
+  badge.style.display = 'inline-flex';
+  const icons = { work: '💼', gym: '🏋', free: '🌤' };
+  badge.textContent = (icons[todayPlan.type] || '') + ' ' + todayPlan.label + ' · по плану мая';
+  dayType = todayPlan.type;
+} else {
+  const activeBtn = document.getElementById('btn-' + dayType);
+  if (activeBtn) activeBtn.classList.add('active');
+}
+
+function setDayType(t) {
+  if (PLAN[today()]) return;
+  dayType = t;
+  save('dayType_' + today(), t);
+  document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn-' + t).classList.add('active');
+  renderTasks();
+}
+
+function renderTasks() {
+  const { tasks, prefix } = getCurrentTasks();
+  const done = load('tasks_' + today(), {});
+  document.getElementById('taskList').innerHTML = tasks.map((t, i) => {
+    const isDone = !!done[prefix + '_' + i];
+    return `<div class="task-item ${isDone ? 'done' : ''}" onclick="toggleTask(${i})">
+      <div class="chk"><span class="chk-icon">✓</span></div>
+      <span class="task-text">${t.text}</span>
+      ${t.tag ? `<span class="task-tag">${t.tag}</span>` : ''}
+    </div>`;
+  }).join('');
+  renderCustomTasks();
+  updateProgress();
+}
+
+function toggleTask(i) {
+  const { prefix } = getCurrentTasks();
+  const done = load('tasks_' + today(), {});
+  const k = prefix + '_' + i;
+  done[k] = !done[k];
+  save('tasks_' + today(), done);
+  renderTasks();
+}
+
+function resetTasks() {
+  save('tasks_' + today(), {});
+  save('custom_tasks_' + today(), []);
+  renderTasks();
+}
+
+function updateProgress() {
+  const { tasks, prefix } = getCurrentTasks();
+  const done = load('tasks_' + today(), {});
+  const custom = load('custom_tasks_' + today(), []);
+  const planDone = tasks.filter((_, i) => done[prefix + '_' + i]).length;
+  const customDone = custom.filter(t => t.done).length;
+  const total = tasks.length + custom.length;
+  const completed = planDone + customDone;
+  const pct = total ? Math.round(completed / total * 100) : 0;
+  document.getElementById('taskProgress').textContent = pct + '% задач';
+  const dot = document.querySelector('.progress-dot');
+  dot.style.background = pct === 100 ? '#22c55e' : pct > 50 ? '#f59e0b' : '#22c55e';
+}
+
+function loadCustomTasks() { return load('custom_tasks_' + today(), []); }
+function saveCustomTasks(arr) { save('custom_tasks_' + today(), arr); }
+
+function renderCustomTasks() {
+  const custom = loadCustomTasks();
+  document.getElementById('customTaskList').innerHTML = custom.map((t, i) =>
+    `<div class="task-item ${t.done ? 'done' : ''}" onclick="toggleCustomTask(${i})" style="padding-right:2px;">
+      <div class="chk"><span class="chk-icon">✓</span></div>
+      <span class="task-text">${t.text}</span>
+      <button class="custom-del-btn" onclick="deleteCustomTask(event,${i})">×</button>
+    </div>`
+  ).join('');
+}
+
+function addCustomTask() {
+  const input = document.getElementById('customTaskInput');
+  const text = input.value.trim();
+  if (!text) return;
+  const custom = loadCustomTasks();
+  custom.push({ text, done: false });
+  saveCustomTasks(custom);
+  input.value = '';
+  renderTasks();
+}
+
+function toggleCustomTask(i) {
+  const custom = loadCustomTasks();
+  custom[i].done = !custom[i].done;
+  saveCustomTasks(custom);
+  renderTasks();
+}
+
+function deleteCustomTask(e, i) {
+  e.stopPropagation();
+  const custom = loadCustomTasks();
+  custom.splice(i, 1);
+  saveCustomTasks(custom);
+  renderTasks();
+}
+
+renderTasks();
+
+function renderCounters() {
+  const c = load('counters_may2026', {});
+  document.getElementById('counterRows').innerHTML = COUNTERS.map(({ key, label }) =>
+    `<div class="counter-row">
+      <span class="counter-lbl">${label}</span>
+      <button class="cnt-btn" onclick="counter('${key}',-1)">−</button>
+      <span class="counter-val" id="cnt-${key}">${c[key] || 0}</span>
+      <button class="cnt-btn" onclick="counter('${key}',1)">+</button>
+    </div>`
+  ).join('');
+  document.getElementById('shootsCount').textContent = c.shoots || 0;
+}
+
+function counter(key, delta) {
+  const c = load('counters_may2026', {});
+  c[key] = Math.max(0, (c[key] || 0) + delta);
+  save('counters_may2026', c);
+  renderCounters();
+}
+
+renderCounters();
+
+function addIncome() {
+  const amount = parseInt(document.getElementById('incomeAmount').value);
+  const desc = document.getElementById('incomeDesc').value.trim();
+  if (!amount || amount <= 0) return;
+  const log = load('income_may2026', []);
+  log.unshift({ date: today(), amount, desc: desc || '—' });
+  save('income_may2026', log);
+  document.getElementById('incomeAmount').value = '';
+  document.getElementById('incomeDesc').value = '';
+  renderIncome();
+}
+
+function deleteIncome(i) {
+  const log = load('income_may2026', []);
+  log.splice(i, 1);
+  save('income_may2026', log);
+  renderIncome();
+}
+
+function renderIncome() {
+  const log = load('income_may2026', []);
+  const container = document.getElementById('incomeLog');
+  container.innerHTML = log.length === 0
+    ? '<div class="empty">Пока пусто — первые деньги скоро</div>'
+    : log.map((e, i) =>
+        `<div class="income-item">
+          <span class="income-amt">+${e.amount.toLocaleString('ru')} ₽</span>
+          <span class="income-desc">${e.desc}</span>
+          <span class="income-date">${formatDate(e.date)}</span>
+          <button class="del-btn" onclick="deleteIncome(${i})">×</button>
+        </div>`
+      ).join('');
+  const total = log.reduce((s, e) => s + e.amount, 0);
+  document.getElementById('totalIncome').textContent = total.toLocaleString('ru');
+  document.getElementById('incomeTotalBottom').textContent = total.toLocaleString('ru') + ' ₽';
+  const pct = Math.min(100, Math.round(total / 30000 * 100));
+  document.getElementById('incomeBar').style.width = pct + '%';
+}
+
+renderIncome();
+
+function updateFollowers() {
+  const val = parseInt(document.getElementById('followersInput').value);
+  if (!val || val < 0) return;
+  save('followers_current', val);
+  document.getElementById('followersInput').value = '';
+  renderFollowers();
+}
+
+function renderFollowers() {
+  const cur = load('followers_current', 321);
+  document.getElementById('followersCount').textContent = cur.toLocaleString('ru');
+  const pct = Math.max(0, Math.min(100, Math.round((cur - 321) / (400 - 321) * 100)));
+  document.getElementById('followersBar').style.width = pct + '%';
+}
+
+renderFollowers();
+
+const savedNote = load('note_' + today(), '');
+if (savedNote) document.getElementById('noteInput').value = savedNote;
+
+function saveNote() {
+  save('note_' + today(), document.getElementById('noteInput').value);
+  const msg = document.getElementById('noteSaved');
+  msg.style.display = 'inline';
+  setTimeout(() => msg.style.display = 'none', 2000);
+}
+
+const weekNum = Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000));
+document.getElementById('quoteDisplay').textContent = '«' + QUOTES[weekNum % QUOTES.length] + '»';
+
+function openExport() {
+  const dt = today();
+  const c = load('counters_may2026', {});
+  const income = load('income_may2026', []);
+  const followers = load('followers_current', 321);
+  const tasks = load('tasks_' + dt, {});
+
+  const planDay = PLAN[dt];
+  const exportType = planDay ? planDay.type : load('dayType_' + dt, 'work');
+  const typeLabel = planDay ? planDay.label : { work: 'Рабочий', gym: 'Зал', free: 'Выходной' }[exportType];
+  const exportTasks = planDay ? planDay.tasks : TASKS[exportType];
+  const exportPrefix = planDay ? 'plan' : exportType;
+
+  const totalIncome = income.reduce((s, e) => s + e.amount, 0);
+
+  const custom = load('custom_tasks_' + dt, []);
+  const taskLines = [
+    ...exportTasks.map((t, i) => {
+      const done = !!tasks[exportPrefix + '_' + i];
+      return (done ? '✓' : '✗') + ' ' + t.text;
+    }),
+    ...custom.map(t => (t.done ? '✓' : '✗') + ' ' + t.text + ' [своя]'),
+  ].join('\n');
+
+  const incomeLines = income.length === 0
+    ? '  (пусто)'
+    : income.map(e => `  +${e.amount.toLocaleString('ru')} ₽ — ${e.desc} (${e.date})`).join('\n');
+
+  const noteLines = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateKey = d.toISOString().split('T')[0];
+    const n = load('note_' + dateKey, '');
+    if (n.trim()) noteLines.push(`  ${formatDate(dateKey)}: ${n.trim()}`);
+  }
+
+  const lines = [
+    '=== EVILONSIDE DASHBOARD ===',
+    `Дата: ${dt}`,
+    '',
+    '📊 СЧЁТЧИКИ МАЯ',
+    `  Съёмок:     ${c.shoots || 0} / 3`,
+    `  Рилсов:     ${c.reels || 0} / 4`,
+    `  Тренировок: ${c.gym || 0}`,
+    `  Постов:     ${c.posts || 0} / 12`,
+    `  Заявок:     ${c.leads || 0}`,
+    '',
+    '💰 ДОХОДЫ МАЯ',
+    `  Итого: ${totalIncome.toLocaleString('ru')} ₽ / 30 000 ₽`,
+    incomeLines,
+    '',
+    '👥 ИНСТАГРАМ',
+    `  Подписчики: ${followers} / 400`,
+    '',
+    `📅 СЕГОДНЯ (${typeLabel})`,
+    taskLines,
+    '',
+    '📝 ЗАМЕТКИ (7 дней)',
+    noteLines.length > 0 ? noteLines.join('\n') : '  (пусто)',
+  ];
+
+  document.getElementById('exportText').value = lines.join('\n');
+  document.getElementById('exportModal').classList.add('open');
+  document.getElementById('copyBtn').textContent = 'Скопировать';
+}
+
+function copyExport() {
+  const ta = document.getElementById('exportText');
+  const btn = document.getElementById('copyBtn');
+  const done = () => {
+    btn.textContent = 'Скопировано ✓';
+    setTimeout(() => btn.textContent = 'Скопировать', 2500);
+  };
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(ta.value).then(done).catch(fallback);
+  } else {
+    fallback();
+  }
+  function fallback() {
+    ta.removeAttribute('readonly');
+    ta.select();
+    ta.setSelectionRange(0, 99999);
+    try { document.execCommand('copy'); done(); } catch {}
+    ta.setAttribute('readonly', '');
+  }
+}
+
+function closeModal() {
+  document.getElementById('exportModal').classList.remove('open');
+}
+
+function handleModalClick(e) {
+  if (e.target === document.getElementById('exportModal')) closeModal();
+}
+</script>
+</body>
+</html>
